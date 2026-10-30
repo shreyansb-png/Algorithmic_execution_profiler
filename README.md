@@ -12,4 +12,4 @@ Jack program → Jack compiler → VM translator → Assembler → C++ emulator 
 
 ## Plan
 
-See [docs/plan.md](docs/plan.md)
+See [docs/project_plan.md](docs/project_plan.md)
