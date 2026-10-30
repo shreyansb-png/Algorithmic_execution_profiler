@@ -228,36 +228,527 @@ Input types to test where it matters: **sorted**, **reverse-sorted**, and **rand
 
 ## 7. Analysis Methodology
 
-### 7.1 Candidate models
-Each workload's data is fitted against these shapes, with non-negative coefficients:
+The objective of this analysis is to determine the empirical time complexity of each workload by studying how its execution cost changes as the input size \(N\) increases.
 
-| Model | Form |
+Rather than assuming the theoretical complexity beforehand, we measure the actual number of CPU cycles consumed by each workload and compare the measurements against several candidate growth functions.
+
+The analysis follows five major stages:
+
+1. Collect reliable performance measurements for different input sizes.
+2. Fit multiple mathematical models to the observed measurements.
+3. Evaluate the quality of each model using statistical criteria.
+4. Validate the models using log-log analysis, normalized cost, and extrapolation.
+5. Compare the empirical results with theoretical complexity expectations.
+
+### 7.1 Performance Data Collection
+
+For each workload, measurements are collected over a range of input sizes.
+
+Let:
+
+- \(N\) denote the input size.
+- \(C(N)\) denote the measured CPU cycles consumed by the workload.
+- \(\widehat{C}(N)\) denote the cycles predicted by a fitted mathematical model.
+
+The input sizes should cover a sufficiently large range to reveal differences between possible growth rates.
+
+For example, a suitable sequence of input sizes could be:
+
+\[
+N = 100,\ 200,\ 400,\ 800,\ 1600,\ 3200,\ldots
+\]
+
+Geometrically increasing input sizes are useful because they make multiplicative growth easier to identify.
+
+For each input size:
+
+- Execute the workload multiple times.
+- Use the same measurement procedure across all input sizes.
+- Record the CPU cycles for every execution.
+- Use the median of repeated measurements as the representative value.
+- Keep the hardware, compiler, optimization flags, and execution environment consistent.
+
+The median is preferred over a single measurement because it reduces the influence of occasional interruptions and unusually high execution times.
+
+The measurements should be stored in a structured dataset:
+
+| Input size \(N\) | Run 1 | Run 2 | Run 3 | Median cycles |
+|---|---:|---:|---:|---:|
+| \(N_1\) | ... | ... | ... | ... |
+| \(N_2\) | ... | ... | ... | ... |
+| \(N_3\) | ... | ... | ... | ... |
+
+Measurements should be taken over the workload itself rather than including unrelated operations such as file input, output, or input generation, unless those operations are explicitly part of the workload being analyzed.
+
+### 7.2 Candidate Complexity Models
+
+Each workload is fitted against several candidate mathematical functions.
+
+The purpose is to identify which growth function best explains the observed performance data.
+
+Let \(C(N)\) represent the measured number of cycles.
+
+The candidate models are:
+
+| Model | Mathematical Form | Expected Complexity |
+|---|---|---|
+| Constant | \(C(N)=a\) | \(O(1)\) |
+| Logarithmic | \(C(N)=a\ln N+b\) | \(O(\log N)\) |
+| Linear | \(C(N)=aN+b\) | \(O(N)\) |
+| Linearithmic | \(C(N)=aN\ln N+b\) | \(O(N\log N)\) |
+| Quadratic | \(C(N)=aN^2+bN+c\) | \(O(N^2)\) |
+| Cubic | \(C(N)=aN^3+bN^2+cN+d\) | \(O(N^3)\) |
+| Exponential | \(C(N)=a2^N+b\) | \(O(2^N)\) |
+
+Here, \(a,b,c,d\) are fitted parameters whose values are determined from the experimental measurements.
+
+**Coefficient constraints:**
+
+The fitted model should predict non-negative execution costs over the measured input range.
+
+However, it is not necessary to constrain every coefficient to be non-negative. For example, a polynomial can have a positive leading coefficient and negative lower-order coefficients while still predicting positive execution costs.
+
+The leading coefficient should be positive for the usual positive-growth models, while lower-order coefficients and constant offsets may take either sign.
+
+This distinction is important because imposing non-negative constraints on every coefficient can unnecessarily restrict the fitting process and produce inaccurate models.
+
+**Model fitting procedure:**
+
+For each candidate model:
+
+1. Substitute the measured input sizes into the mathematical expression.
+2. Estimate the unknown parameters using least-squares regression.
+3. Calculate the predicted execution cost for every input size.
+4. Compare the predicted values with the actual measurements.
+5. Store the fitted parameters and model evaluation statistics.
+
+The primary fitting objective is to minimize the residual sum of squares:
+
+\[
+RSS=\sum_{i=1}^{m}
+\left(C(N_i)-\widehat{C}(N_i)\right)^2
+\]
+
+where \(m\) is the number of measured input sizes.
+
+All candidate models should be fitted using the same measurement dataset and the same error scale so that their statistical comparisons remain meaningful.
+
+### 7.3 Why R-squared Alone Is Not Enough
+
+A common approach to evaluating regression models is the coefficient of determination, \(R^2\).
+
+It is defined as:
+
+\[
+R^2=
+1-
+\frac{
+\sum_{i=1}^{m}(C(N_i)-\widehat{C}(N_i))^2
+}{
+\sum_{i=1}^{m}(C(N_i)-\overline{C})^2
+}
+\]
+
+where:
+
+\[
+\overline{C}=\frac{1}{m}\sum_{i=1}^{m}C(N_i)
+\]
+
+An \(R^2\) value close to 1 indicates that the model explains a large proportion of the variation in the measured data.
+
+However, a high \(R^2\) does not necessarily mean that the selected complexity class is correct.
+
+For example, a quadratic model:
+
+\[
+C(N)=aN^2+bN+c
+\]
+
+can fit approximately linear data by assigning a very small value to \(a\).
+
+Similarly, a cubic model can approximate quadratic or linear growth by making its higher-order coefficients sufficiently small.
+
+Therefore, a more flexible model may achieve a higher \(R^2\) simply because it has more parameters.
+
+To avoid selecting unnecessarily complicated models, we combine \(R^2\) with the following evaluation methods.
+
+#### 7.3.1 Akaike Information Criterion (AIC)
+
+AIC evaluates the trade-off between goodness of fit and model complexity.
+
+For least-squares regression with approximately Gaussian residuals, an AIC score, ignoring a common additive constant, can be calculated as:
+
+\[
+\boxed{
+AIC=m\ln\left(\frac{RSS}{m}\right)+2k
+}
+\]
+
+where:
+
+- \(m\) is the number of observations.
+- \(RSS\) is the residual sum of squares.
+- \(k\) is the number of fitted model parameters.
+
+A model with more parameters receives a larger complexity penalty.
+
+**Interpretation:** Lower AIC values indicate a preferable balance between fitting accuracy and model simplicity.
+
+#### 7.3.2 Bayesian Information Criterion (BIC)
+
+BIC is another model-selection criterion that penalizes unnecessary parameters.
+
+It is calculated as:
+
+\[
+\boxed{
+BIC=m\ln\left(\frac{RSS}{m}\right)+k\ln(m)
+}
+\]
+
+Unlike AIC, the penalty increases with the logarithm of the number of observations.
+
+As the dataset becomes larger, BIC generally applies a stronger penalty to additional parameters.
+
+**Interpretation:** The model with the lowest BIC is preferred among the candidate models being compared.
+
+Both AIC and BIC should be calculated using the same observations and the same response scale.
+
+Neither criterion proves that a particular theoretical complexity class is correct. They provide evidence for selecting between the candidate models.
+
+### 7.4 Log-Log Analysis
+
+Log-log analysis is used to investigate polynomial growth rates.
+
+Suppose the execution cost follows:
+
+\[
+C(N)=aN^k
+\]
+
+Taking logarithms on both sides:
+
+\[
+\ln C(N)=\ln a+k\ln N
+\]
+
+This is a linear equation of the form:
+
+\[
+y=mx+c
+\]
+
+where:
+
+\[
+y=\ln C(N),\qquad x=\ln N
+\]
+
+and the slope is:
+
+\[
+\boxed{k}
+\]
+
+Therefore, the slope of the log-log plot provides an estimate of the polynomial growth exponent.
+
+Expected approximate slopes:
+
+| Complexity | Expected Log-Log Slope |
+|---|---:|
+| \(O(1)\) | 0 |
+| \(O(\log N)\) | Approaches 0 |
+| \(O(N)\) | 1 |
+| \(O(N\log N)\) | Approaches 1 |
+| \(O(N^2)\) | 2 |
+| \(O(N^3)\) | 3 |
+
+For each workload:
+
+1. Transform the input sizes using \(\ln N\).
+2. Transform the measured cycles using \(\ln C(N)\).
+3. Plot \(\ln C(N)\) against \(\ln N\).
+4. Fit a straight line to the transformed data.
+5. Record the estimated slope.
+6. Compare the slope against the expected theoretical exponent.
+
+The slope should preferably be estimated over the larger input sizes, where constant and lower-order terms have less influence.
+
+**Important limitation:**
+
+Log-log analysis alone cannot reliably distinguish \(O(N)\) from \(O(N\log N)\), because both have slopes approaching 1.
+
+For a linearithmic workload:
+
+\[
+C(N)=aN\ln N
+\]
+
+the local log-log slope is:
+
+\[
+\frac{d\ln C(N)}{d\ln N}
+=
+1+\frac{1}{\ln N}
+\]
+
+which approaches 1 as \(N\) increases.
+
+An exponential workload also does not produce a constant log-log slope. For \(C(N)=a2^N\), the local log-log slope grows with \(N\). A semi-log plot of \(\ln C(N)\) against \(N\) is a more appropriate additional diagnostic for exponential growth.
+
+### 7.5 Normalized Cost Analysis
+
+Normalized cost provides another way to identify the underlying growth rate.
+
+The main idea is to divide the measured execution cost by a candidate growth function.
+
+If the selected growth function is correct, the normalized cost should approach a constant as the input size increases.
+
+Define:
+
+\[
+\boxed{
+C_{\text{normalized}}(N)=\frac{C(N)}{f(N)}
+}
+\]
+
+where \(f(N)\) is the candidate growth function.
+
+The expected normalization functions are:
+
+| Candidate Complexity | Normalization |
 |---|---|
-| Constant | `a` |
-| Logarithmic | `a*log(N) + b` |
-| Linear | `a*N + b` |
-| Linearithmic | `a*N*log(N) + b` |
-| Quadratic | `a*N^2 + b*N + c` |
-| Cubic | `a*N^3 + b*N^2 + c*N + d` |
-| Exponential | `a*2^N + b` |
+| \(O(1)\) | \(C(N)\) |
+| \(O(\log N)\) | \(\frac{C(N)}{\ln N}\) |
+| \(O(N)\) | \(\frac{C(N)}{N}\) |
+| \(O(N\log N)\) | \(\frac{C(N)}{N\ln N}\) |
+| \(O(N^2)\) | \(\frac{C(N)}{N^2}\) |
+| \(O(N^3)\) | \(\frac{C(N)}{N^3}\) |
+| \(O(2^N)\) | \(\frac{C(N)}{2^N}\) |
 
-### 7.2 Why R-squared is not enough
-A quadratic can fit perfectly linear data (it just sets the N^2 coefficient close to 0), so a high R-squared only says a model is flexible. To decide which model is right, the project uses:
+For example, if:
 
-- **AIC/BIC**, which penalize extra parameters
-- **Log-log slope**: on a log-log plot, O(N^k) appears as a straight line with slope k
-- **Normalized cost** C(N)/f(N), which flattens to a constant when f is the right growth function
-- **Extrapolation test**: fit on small N, predict large N, and compare with the real measurements
+\[
+C(N)=aN^2+bN+c
+\]
 
-### 7.3 Plots to produce
-- [ ] Cycles vs N (linear axes) for each workload
-- [ ] Cycles vs N (log-log axes) with fitted slope
-- [ ] Normalized cost C(N)/f(N) per workload
-- [ ] All workloads on one log-log chart
-- [ ] Best case vs worst case for sorting
+then:
 
----
+\[
+\frac{C(N)}{N^2}
+=
+a+\frac{b}{N}+\frac{c}{N^2}
+\]
 
+As \(N\) becomes large:
+
+\[
+\boxed{
+\lim_{N\to\infty}\frac{C(N)}{N^2}=a
+}
+\]
+
+Thus, a quadratic workload should exhibit approximately constant normalized cost when divided by \(N^2\).
+
+Similarly, a linear workload should flatten when divided by \(N\), while a linearithmic workload should flatten when divided by \(N\ln N\).
+
+For every workload, normalized-cost curves should be plotted against input size for the most relevant candidate complexity classes.
+
+The best normalization is the one that exhibits the most stable behavior over the larger input sizes, rather than merely appearing flat at a few isolated measurements.
+
+### 7.6 Extrapolation and Predictive Validation
+
+A model that fits the existing measurements well may still fail to predict performance at larger input sizes.
+
+To test whether a model captures the actual growth pattern, an extrapolation experiment is performed.
+
+The procedure is:
+
+1. Divide the measured dataset into a training set and a validation set.
+2. Use smaller input sizes for training.
+3. Fit all candidate models using only the training measurements.
+4. Predict the execution cost for larger input sizes.
+5. Compare the predictions against the actual measured costs.
+6. Calculate prediction errors for every model.
+
+The relative prediction error is defined as:
+
+\[
+\boxed{
+E(N)=
+\frac{|C(N)-\widehat{C}(N)|}{C(N)}
+\times100
+}
+\]
+
+where \(C(N)\) is the actual measured cycle count and \(\widehat{C}(N)\) is the predicted cycle count.
+
+A lower prediction error indicates better predictive performance.
+
+The model should ideally be tested on multiple training/validation splits rather than relying on a single split.
+
+For example:
+
+- Train on the smallest 60% of input sizes and validate on the remaining 40%.
+- Train on the smallest 70% and validate on the remaining 30%.
+- Train on the smallest 80% and validate on the remaining 20%.
+
+This helps determine whether the selected model continues to predict the observed growth pattern beyond the range on which it was fitted.
+
+The extrapolation test is particularly important when distinguishing models that have similar behavior over small input sizes, such as linear and linearithmic growth.
+
+**Note:** Extrapolation is an empirical validation technique, not a mathematical proof of asymptotic complexity. Predictions far beyond the measured range should be interpreted cautiously.
+
+### 7.7 Sorting: Best-Case vs Worst-Case Analysis
+
+Sorting algorithms can exhibit different performance depending on the initial arrangement of the input data.
+
+Therefore, sorting workloads should be analyzed using multiple input distributions.
+
+The following cases should be considered:
+
+| Case | Input Arrangement | Purpose |
+|---|---|---|
+| Best case | Already sorted | Measures performance on favorable input |
+| Average case | Randomly shuffled | Measures typical performance |
+| Worst case | Adversarial arrangement | Measures performance on unfavorable input |
+
+For each input size \(N\), collect the CPU cycles for all three cases.
+
+The analysis should compare:
+
+\[
+C_{\text{best}}(N),\quad
+C_{\text{average}}(N),\quad
+C_{\text{worst}}(N)
+\]
+
+Plot all three measurements on the same graph.
+
+Then fit candidate complexity models independently to each case.
+
+This allows us to investigate:
+
+- Whether the algorithm is sensitive to input ordering.
+- Whether its best and worst cases belong to different complexity classes.
+- Whether random input behaves closer to the best or worst case.
+- Whether the experimental results agree with the theoretical analysis of the sorting algorithm.
+
+For algorithms such as insertion sort, different input orders can produce substantial differences in execution cost. For algorithms such as merge sort, the asymptotic running time is generally \(O(N\log N)\) across these arrangements, although constant factors may still differ.
+
+The input-generation procedure must be documented so that best-case, average-case, and worst-case measurements are reproducible.
+
+### 7.8 Plots and Visualizations
+
+The following plots will be generated for every workload to visualize and validate the measured growth patterns.
+
+#### Plot 1: Cycles vs Input Size (Linear Axes)
+
+- X-axis: Input size \(N\).
+- Y-axis: Measured CPU cycles.
+- Plot the actual measurements.
+- Overlay the fitted candidate model.
+- Use this plot to compare absolute execution costs and identify large deviations.
+
+#### Plot 2: Cycles vs Input Size (Log-Log Axes)
+
+- X-axis: \(\log N\).
+- Y-axis: \(\log C(N)\).
+- Include a fitted straight-line trend where appropriate.
+- Display the estimated log-log slope.
+- Compare the measured slope with the expected theoretical growth exponent.
+
+#### Plot 3: Normalized Cost vs Input Size
+
+Generate separate normalized-cost curves for the relevant candidate functions:
+
+\[
+\frac{C(N)}{N},\quad
+\frac{C(N)}{N\log N},\quad
+\frac{C(N)}{N^2},\quad
+\frac{C(N)}{N^3}
+\]
+
+Also include the logarithmic and exponential normalizations where relevant.
+
+The objective is to identify which normalization produces the most stable curve as \(N\) increases.
+
+#### Plot 4: Comparison of All Workloads
+
+- Display all workloads on a common log-log chart.
+- Use consistent axis scaling.
+- Include labels for each workload.
+- Compare the estimated growth rates.
+- Identify workloads that scale similarly and those that grow substantially faster.
+
+If the workloads have very different absolute cycle counts, consider using separate panels or clearly documented scaling so that smaller workloads remain visible.
+
+#### Plot 5: Sorting Best Case vs Average Case vs Worst Case
+
+- Plot all three input arrangements on the same graph.
+- Compare their measured CPU cycles.
+- Overlay fitted growth models.
+- Examine whether the input distribution changes the empirical growth rate or mainly changes the constant factor.
+
+#### Plot 6: Actual vs Predicted Cycles
+
+- X-axis: Input size \(N\).
+- Y-axis: CPU cycles.
+- Plot actual measured values and model predictions.
+- Clearly distinguish training measurements from validation measurements.
+- Use this plot to evaluate extrapolation accuracy.
+
+### 7.9 Final Model Selection
+
+The final complexity classification should not be determined by a single statistical score.
+
+Instead, each candidate model should be evaluated using the combined evidence from:
+
+1. **Goodness of fit:** Does the model closely match the measured CPU cycles?
+2. **AIC and BIC:** Does the model explain the data without unnecessary parameters?
+3. **Log-log slope:** Does the estimated growth exponent agree with the candidate complexity?
+4. **Normalized cost:** Does dividing the measured cost by the proposed growth function produce a stable curve?
+5. **Extrapolation:** Does the model predict larger input sizes accurately?
+6. **Theoretical consistency:** Does the empirical result agree with the known structure of the workload?
+
+A final comparison table should be prepared for every workload:
+
+| Candidate Model | \(R^2\) | AIC | BIC | Log-Log Slope | Validation Error |
+|---|---:|---:|---:|---:|---:|
+| Constant | ... | ... | ... | ... | ... |
+| Logarithmic | ... | ... | ... | ... | ... |
+| Linear | ... | ... | ... | ... | ... |
+| Linearithmic | ... | ... | ... | ... | ... |
+| Quadratic | ... | ... | ... | ... | ... |
+| Cubic | ... | ... | ... | ... | ... |
+| Exponential | ... | ... | ... | ... | ... |
+
+The final reported complexity should be the growth class that is consistently supported by the different evaluation methods.
+
+If multiple models remain plausible, the result should explicitly mention that the available measurements are insufficient to distinguish them reliably.
+
+The goal is not simply to find the curve with the smallest fitting error. The goal is to identify the simplest mathematically reasonable growth model that explains the measurements, predicts unseen input sizes, and agrees with the algorithm's theoretical behavior.
+
+### 7.10 Expected Deliverables
+
+The analysis phase should produce the following artifacts:
+
+- [ ] Raw benchmark measurements for every workload and input size.
+- [ ] Median cycle counts and measurement statistics.
+- [ ] Fitted parameters for every candidate complexity model.
+- [ ] \(R^2\), RSS, AIC, and BIC comparison tables.
+- [ ] Log-log plots with estimated slopes.
+- [ ] Normalized-cost plots for competing growth functions.
+- [ ] Actual-versus-predicted performance plots.
+- [ ] Extrapolation and validation error tables.
+- [ ] Best-case, average-case, and worst-case sorting comparisons.
+- [ ] A final complexity classification for each workload.
+- [ ] A comparison between empirical and theoretical complexity.
+
+The final report should include both the numerical results and the visualizations, together with a brief explanation of why a particular complexity class was selected.
+
+**Final objective:** Establish a reproducible experimental methodology for determining algorithmic growth rates, rather than relying solely on theoretical assumptions or regression fit scores.
 ## 8. Testing and Validation
 
 - [ ] **Emulator vs official emulator:** compare final RAM on a set of test programs
