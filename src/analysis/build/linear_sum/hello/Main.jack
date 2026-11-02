@@ -1,0 +1,34 @@
+class Main {
+    function void main() {
+        var int n, i, count, valid;
+        var Array port;
+
+        let port = 24577;
+
+        let n = 512;
+        let i = 0;
+        let count = 0;
+
+        // ROI START
+        let port[0] = 1;
+
+        while (i < n) {
+            let count = count + 1;
+            let i = i + 1;
+        }
+
+        // ROI END
+        let port[1] = 1;
+
+        // Verify outside ROI
+        let valid = 0;
+
+        if (count = n) {
+            let valid = 1;
+        }
+
+        do Memory.poke(16384, valid);
+
+        return;
+    }
+}

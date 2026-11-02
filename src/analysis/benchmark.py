@@ -3,6 +3,7 @@ import re
 import shutil
 import subprocess
 import statistics
+import os
 
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12,29 +13,23 @@ from pathlib import Path
 # 1. PROJECT PATHS
 # =====================================================
 
-ROOT = Path(r"C:\n2t-work")
+# Dynamically locate the directory containing benchmark.py (your 'analysis' folder)
+ANALYSIS_DIR = Path(__file__).resolve().parent
 
-ANALYSIS_DIR = ROOT / "analysis"
+# ROOT is automatically set to one folder above ANALYSIS_DIR
+ROOT = ANALYSIS_DIR.parent
 
 SOURCE_HELLO_DIR = ROOT / "hello"
-
-EMU_DIR = ROOT / "emu"
-
+EMU_DIR = ROOT / "emulator"
 PROFILER_EXE = EMU_DIR / "profiler.exe"
+VM_TRANSLATOR_EXE = ROOT / "VMtranslator" / "VMTranslator.exe"
 
-VM_TRANSLATOR_EXE = (
-    ROOT / "VMtranslator" / "VMTranslator.exe"
-)
-
-# This is the tools path that worked in your setup.
-# Change it only if your installation is elsewhere.
-
-TOOLS_DIR = Path(
-    r"C:\Users\shreyans\Downloads\nand2tetris\nand2tetris\tools"
-)
+# Use an environment variable for the external tools directory.
+# If not set, it defaults to a 'nand2tetris' folder located next to your project folder.
+default_tools_dir = ROOT.parent / "nand2tetris" / "tools"
+TOOLS_DIR = Path(os.getenv("N2T_TOOLS_DIR", default_tools_dir))
 
 JACK_COMPILER_BAT = TOOLS_DIR / "JackCompiler.bat"
-
 ASSEMBLER_BAT = TOOLS_DIR / "Assembler.bat"
 
 

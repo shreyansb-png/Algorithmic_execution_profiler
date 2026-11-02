@@ -1,0 +1,11 @@
+class Sys {
+    function void init() {
+        var Array port;
+        do Memory.init();
+        do Math.init();
+        do Main.main();
+        let port = 24579;
+        let port[0] = 1;
+        return;
+    }
+}

@@ -1,0 +1,195 @@
+function Main.main 11
+push constant 24577
+pop local 9
+push constant 512
+pop local 0
+push local 0
+call Array.new 1
+pop local 10
+push constant 0
+pop local 1
+label WHILE_EXP0
+push local 1
+push local 0
+lt
+not
+if-goto WHILE_END0
+push local 1
+push local 10
+add
+push local 1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push local 1
+push constant 1
+add
+pop local 1
+goto WHILE_EXP0
+label WHILE_END0
+push constant 0
+pop local 2
+push constant 1
+pop local 3
+push constant 0
+pop local 6
+push constant 0
+pop local 7
+push constant 0
+push local 9
+add
+push constant 1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+label WHILE_EXP1
+push local 2
+push local 3
+lt
+not
+if-goto WHILE_END1
+push local 10
+push local 0
+push local 0
+push constant 1
+sub
+call Main.binarySearch 3
+pop local 4
+push local 10
+push local 0
+push local 0
+call Main.binarySearch 3
+pop local 5
+push local 4
+push local 0
+push constant 1
+sub
+eq
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push local 6
+push constant 1
+add
+pop local 6
+label IF_FALSE0
+push local 5
+push constant 1
+neg
+eq
+if-goto IF_TRUE1
+goto IF_FALSE1
+label IF_TRUE1
+push local 7
+push constant 1
+add
+pop local 7
+label IF_FALSE1
+push local 2
+push constant 1
+add
+pop local 2
+goto WHILE_EXP1
+label WHILE_END1
+push constant 1
+push local 9
+add
+push constant 1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push constant 0
+pop local 8
+push local 6
+push local 3
+eq
+if-goto IF_TRUE2
+goto IF_FALSE2
+label IF_TRUE2
+push local 7
+push local 3
+eq
+if-goto IF_TRUE3
+goto IF_FALSE3
+label IF_TRUE3
+push constant 1
+pop local 8
+label IF_FALSE3
+label IF_FALSE2
+push constant 16384
+push local 8
+call Memory.poke 2
+pop temp 0
+push constant 0
+return
+function Main.binarySearch 4
+push constant 0
+pop local 0
+push argument 1
+push constant 1
+sub
+pop local 1
+push constant 1
+neg
+pop local 3
+label WHILE_EXP0
+push local 0
+push local 1
+push constant 1
+add
+lt
+not
+if-goto WHILE_END0
+push local 0
+push local 1
+add
+push constant 2
+call Math.divide 2
+pop local 2
+push local 2
+push argument 0
+add
+pop pointer 1
+push that 0
+push argument 2
+eq
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push local 2
+pop local 3
+push local 1
+push constant 1
+add
+pop local 0
+goto IF_END0
+label IF_FALSE0
+push local 2
+push argument 0
+add
+pop pointer 1
+push that 0
+push argument 2
+lt
+if-goto IF_TRUE1
+goto IF_FALSE1
+label IF_TRUE1
+push local 2
+push constant 1
+add
+pop local 0
+goto IF_END1
+label IF_FALSE1
+push local 2
+push constant 1
+sub
+pop local 1
+label IF_END1
+label IF_END0
+goto WHILE_EXP0
+label WHILE_END0
+push local 3
+return

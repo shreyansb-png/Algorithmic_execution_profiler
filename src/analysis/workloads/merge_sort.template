@@ -1,0 +1,159 @@
+class Main {
+    function void main() {
+        var int n, i, valid;
+        var Array port, data, temp;
+
+        let port = 24577;
+
+        let n = N_VALUE;
+
+        let data = Array.new(n);
+        let temp = Array.new(n);
+
+        // Initialize descending array outside ROI.
+        let i = 0;
+
+        while (i < n) {
+            let data[i] = n - i;
+            let i = i + 1;
+        }
+
+        // ROI START
+        let port[0] = 1;
+
+        do Main.mergeSort(
+            data, temp, 0, n - 1
+        );
+
+        // ROI END
+        let port[1] = 1;
+
+        // Verify output outside ROI.
+        let valid = 1;
+        let i = 0;
+
+        while (i < (n - 1)) {
+
+            if (data[i] < data[i + 1]) {
+                let i = i + 1;
+            } else {
+                let valid = 0;
+                let i = i + 1;
+            }
+        }
+
+        if (data[0] < 1) {
+            let valid = 0;
+        }
+
+        if (data[0] > 1) {
+            let valid = 0;
+        }
+
+        if (data[n - 1] < n) {
+            let valid = 0;
+        }
+
+        if (data[n - 1] > n) {
+            let valid = 0;
+        }
+
+        do Memory.poke(16384, valid);
+
+        return;
+    }
+
+
+    function void mergeSort(
+        Array data,
+        Array temp,
+        int left,
+        int right
+    ) {
+        var int mid;
+
+        if (left < right) {
+
+            let mid = (left + right) / 2;
+
+            do Main.mergeSort(
+                data, temp, left, mid
+            );
+
+            do Main.mergeSort(
+                data, temp, mid + 1, right
+            );
+
+            do Main.merge(
+                data, temp, left, mid, right
+            );
+        }
+
+        return;
+    }
+
+
+    function void merge(
+        Array data,
+        Array temp,
+        int left,
+        int mid,
+        int right
+    ) {
+        var int i, j, k;
+
+        let i = left;
+        let j = mid + 1;
+        let k = left;
+
+        // Merge while the left half remains.
+        while (i < (mid + 1)) {
+
+            if (j < (right + 1)) {
+
+                if (data[i] < data[j]) {
+
+                    let temp[k] = data[i];
+
+                    let i = i + 1;
+
+                } else {
+
+                    let temp[k] = data[j];
+
+                    let j = j + 1;
+                }
+
+            } else {
+
+                let temp[k] = data[i];
+
+                let i = i + 1;
+            }
+
+            let k = k + 1;
+        }
+
+        // Copy any remaining elements from right half.
+        while (j < (right + 1)) {
+
+            let temp[k] = data[j];
+
+            let j = j + 1;
+
+            let k = k + 1;
+        }
+
+        // Copy merged segment back into original array.
+        let i = left;
+
+        while (i < (right + 1)) {
+
+            let data[i] = temp[i];
+
+            let i = i + 1;
+        }
+
+        return;
+    }
+}

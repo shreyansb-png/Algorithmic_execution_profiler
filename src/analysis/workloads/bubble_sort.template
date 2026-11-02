@@ -1,0 +1,85 @@
+class Main {
+    function void main() {
+        var int n, i, j, temp, valid;
+        var Array port, data;
+
+        let port = 24577;
+
+        let n = N_VALUE;
+        let data = Array.new(n);
+
+        // Initialize descending array.
+        // This is outside ROI.
+        let i = 0;
+
+        while (i < n) {
+            let data[i] = n - i;
+            let i = i + 1;
+        }
+
+        // ROI START
+        let port[0] = 1;
+
+        let i = 0;
+
+        while (i < n) {
+
+            let j = 0;
+
+            while (j < (n - i - 1)) {
+
+                if (data[j] > data[j + 1]) {
+
+                    let temp = data[j];
+
+                    let data[j] = data[j + 1];
+
+                    let data[j + 1] = temp;
+                }
+
+                let j = j + 1;
+            }
+
+            let i = i + 1;
+        }
+
+        // ROI END
+        let port[1] = 1;
+
+        // Verify sorting outside ROI.
+        let valid = 1;
+        let i = 0;
+
+        while (i < (n - 1)) {
+
+            if (data[i] < data[i + 1]) {
+                let i = i + 1;
+            } else {
+                let valid = 0;
+                let i = i + 1;
+            }
+        }
+
+        // Verify first element = 1.
+        if (data[0] < 1) {
+            let valid = 0;
+        }
+
+        if (data[0] > 1) {
+            let valid = 0;
+        }
+
+        // Verify last element = N.
+        if (data[n - 1] < n) {
+            let valid = 0;
+        }
+
+        if (data[n - 1] > n) {
+            let valid = 0;
+        }
+
+        do Memory.poke(16384, valid);
+
+        return;
+    }
+}

@@ -1,0 +1,19 @@
+function Sys.init 1
+call Memory.init 0
+pop temp 0
+call Math.init 0
+pop temp 0
+call Main.main 0
+pop temp 0
+push constant 24579
+pop local 0
+push constant 0
+push local 0
+add
+push constant 1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push constant 0
+return
