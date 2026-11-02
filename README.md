@@ -721,52 +721,40 @@ The custom emulator is deterministic for the same binary program and initial sta
 
 ```text
 Algorithmic_execution_profiler/
-│
 ├── README.md
-├── LICENSE
-├── .gitignore
-│
 ├── docs/
-│   ├── project_plan.md
-│   ├── architecture.md
-│   ├── methodology.md
-│   ├── implementation.md
-│   └── results.md
-│
-├── emu/
-│   ├── cpu.cpp
-│   ├── cpu.hpp
-│   ├── main.cpp
-│   └── telemetry.hpp
-│
-├── VMtranslator/
-│   └── VMTranslator.cpp
-│
-├── analysis/
-│   ├── benchmark.py
-│   ├── regression.py
-│   ├── requirements.txt
-│   │
-│   └── workloads/
-│       ├── linear_sum.template
-│       ├── bubble_sort.template
-│       ├── binary_search.template
-│       └── merge_sort.template
-│
-├── data/
-│   └── benchmarks.csv
-│
-└── results/
-    ├── figures/
-    │   ├── all_workloads_loglog.png
-    │   ├── normalized_workload_comparison.png
-    │   └── individual workload plots
-    │
-    └── tables/
-        ├── summary.csv
-        ├── model_comparison.csv
-        ├── normalized_cost.csv
-        └── fitted_predictions.csv
+│   ├── plan.md
+│   └── project_plan.md
+├── data/                          # earlier regression outputs
+│   ├── summary.csv
+│   ├── model_comparison.csv
+│   ├── normalized_cost.csv
+│   ├── fitted_predictions.csv
+│   └── csv                        # near-empty placeholder file
+├── results/                       # earlier PNG figures, flat (no subfolders)
+│   ├── all_workloads_loglog.png
+│   ├── normalized_workload_comparison.png
+│   ├── loglog_/linear_/normalized_/prediction_/residuals_<workload>.png
+│   └── plot                       # near-empty placeholder file
+└── src/
+    ├── emulator/
+    │   ├── cpu.cpp, cpu.hpp, main.cpp, telemetry.hpp
+    │   └── profiler.exe
+    ├── VMtranslator/
+    │   ├── VMTranslator.cpp
+    │   └── VMTranslator.exe
+    ├── hello/                     # Jack OS support copied into every build
+    │   ├── Sys.jack
+    │   └── Array.vm, Math.vm, Memory.vm
+    ├── analysis/
+    │   ├── benchmark.py, regression.py, requirements.txt
+    │   ├── workloads/             # binary_search, bubble_sort, linear_sum, merge_sort (.template)
+    │   ├── data/
+    │   │   ├── benchmarks.csv                       # 84 rows: 4 workloads × 7 N × 3 runs
+    │   │   └── benchmarks_previous_20261102_122906.csv
+    │   ├── build/                 # generated Jack/VM/asm/hack, 36 files
+    │   └── __pycache__/
+    └── Sample algorithms/         # older copies of the templates
 ```
 
 The official Nand2Tetris compiler and assembler are external dependencies. Generated executables and temporary build files are not part of the source repository.
