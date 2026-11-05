@@ -1,0 +1,72 @@
+
+class Main {
+    function void main() {
+        var int n, i, target;
+        var int result, valid;
+        var Array port, data;
+
+        let port = 24577;
+
+        let n = N_VALUE;
+
+        let data = Array.new(n);
+
+        // Initialize array outside ROI
+        let i = 0;
+
+        while (i < n) {
+            let data[i] = i + 1;
+            let i = i + 1;
+        }
+
+        let target = 0;
+
+        // ROI START
+        let port[0] = 1;
+
+        let result = Main.countSubsets(data, n, 0, target);
+
+        // ROI END
+        let port[1] = 1;
+
+        // Correctness verification outside ROI
+        let valid = 0;
+
+        if (result = 1) {
+            let valid = 1;
+        }
+
+        do Memory.poke(16384, valid);
+
+        return;
+    }
+
+    function int countSubsets(
+        Array data,
+        int n,
+        int index,
+        int remaining
+    ) {
+        var int excludeCount, includeCount;
+
+        if (index = n) {
+            if (remaining = 0) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+        // Case 1: Exclude current element
+        let excludeCount = Main.countSubsets(
+            data, n, index + 1, remaining
+        );
+
+        // Case 2: Include current element
+        let includeCount = Main.countSubsets(
+            data, n, index + 1, remaining - data[index]
+        );
+
+        return excludeCount + includeCount;
+    }
+}

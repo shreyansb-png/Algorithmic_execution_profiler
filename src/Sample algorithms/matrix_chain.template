@@ -1,0 +1,99 @@
+
+class Main {
+    function void main() {
+        var int n, i, len, j, k;
+        var int cell, leftIndex, rightIndex;
+        var int cost, multiplicationCost;
+        var int result, expected, valid;
+        var Array port, dims, dp;
+
+        let port = 24577;
+
+        let n = N_VALUE;
+
+        let dims = Array.new(n + 1);
+        let dp = Array.new(n * n);
+
+        // Initialize dimensions outside ROI
+        let i = 0;
+
+        while (i < (n + 1)) {
+            let dims[i] = 2;
+            let i = i + 1;
+        }
+
+        // ROI START
+        let port[0] = 1;
+
+        // Initialize diagonal elements
+        let i = 0;
+
+        while (i < n) {
+            let cell = i * n + i;
+            let dp[cell] = 0;
+            let i = i + 1;
+        }
+
+        // Bottom-up Matrix Chain Multiplication
+        let len = 2;
+
+        while (len < (n + 1)) {
+
+            let i = 0;
+
+            while ((i + len) < (n + 1)) {
+
+                let j = i + len - 1;
+
+                let cell = i * n + j;
+
+                let dp[cell] = 32767;
+
+                let k = i;
+
+                while (k < j) {
+
+                    let leftIndex = i * n + k;
+
+                    let rightIndex = (k + 1) * n + j;
+
+                    let multiplicationCost = dims[i] * dims[k + 1];
+
+                    let multiplicationCost = multiplicationCost * dims[j + 1];
+
+                    let cost = dp[leftIndex] + dp[rightIndex];
+
+                    let cost = cost + multiplicationCost;
+
+                    if (cost < dp[cell]) {
+                        let dp[cell] = cost;
+                    }
+
+                    let k = k + 1;
+                }
+
+                let i = i + 1;
+            }
+
+            let len = len + 1;
+        }
+
+        // ROI END
+        let port[1] = 1;
+
+        // Correctness verification outside ROI
+        let result = dp[n - 1];
+
+        let expected = 8 * (n - 1);
+
+        let valid = 0;
+
+        if (result = expected) {
+            let valid = 1;
+        }
+
+        do Memory.poke(16384, valid);
+
+        return;
+    }
+}
