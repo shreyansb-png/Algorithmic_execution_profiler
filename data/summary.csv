@@ -1,5 +1,0 @@
-workload,selected_model,selected_complexity,empirical_classification,loglog_slope,loglog_R2,bic_delta,selected_model_validation_MAPE_percent,number_of_input_sizes,number_of_measurements
-binary_search,logarithmic,O(log N),Inconclusive: competing models have similar BIC,0.4286198435545101,0.9830733728767452,1.887051048831509,11.088008465022476,7,21
-bubble_sort,quadratic,O(N^2),Inconclusive: competing models have similar BIC,2.0033749226588955,0.9999995430421528,1.9459101490553126,2.974499752615705e-14,7,21
-linear_sum,linear,O(N),Some evidence for O(N),0.977332560238698,0.9998488270891968,3.8918202981106305,1.6868016374775332e-14,7,21
-merge_sort,linearithmic,O(N log N),Strong relative evidence for O(N log N),1.2379943999384428,0.9990602243168617,16.20146280745942,1.394765527680604,7,21
