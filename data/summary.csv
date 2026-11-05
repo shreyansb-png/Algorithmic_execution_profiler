@@ -1,0 +1,7 @@
+workload,selected_model,selected_complexity,empirical_classification,loglog_slope,loglog_R2,bic_delta,selected_model_validation_MAPE_percent,number_of_input_sizes,number_of_measurements
+binary_search,logarithmic,O(log N),Strong relative evidence for O(log N),0.34484364003090884,0.9709009661184168,13.317086611482381,14.468593234109731,11,33
+bubble_sort,quadratic,O(N^2),Inconclusive: competing models have similar BIC,2.0033749226588955,0.9999995430421528,1.9459101490553126,2.974499752615705e-14,7,21
+linear_sum,linear,O(N),Strong relative evidence for O(N),0.9867132784274142,0.9999015799853603,297.3201174827609,0.0,10,30
+matrix_chain,cubic,O(N^3),Strong relative evidence for O(N^3),3.0449249289888596,0.9999658729136341,145.5274234921581,0.28278765032993625,11,33
+merge_sort,linearithmic,O(N log N),Strong relative evidence for O(N log N),1.2084362502159438,0.9989995643124039,86.86374519763694,1.0967643633633162,9,27
+subset_count,exponential,O(2^N),Strong relative evidence for O(2^N),4.797416486839691,0.9618310804318772,390.5851431366926,2.0939493660368022e-14,11,33
