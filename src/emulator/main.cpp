@@ -1,12 +1,4 @@
 
-// main.cpp
-// Orchestrator for the Hack emulator. Loads ROM, preloads RAM, runs execution, and outputs telemetry.
-//
-// Usage:
-//   profiler <program.hack> [--ram-init <file.txt>] [--peek <addr>]...
-//
-//   --peek <addr>   after the run, print RAM[addr] to the error stream (stderr).
-//                   Can be given several times. Used to check a program's answer.
 
 #include "cpu.hpp"
 #include "telemetry.hpp"
@@ -64,8 +56,6 @@ int main(int argc, char* argv[]) {
             return 1;
         }
         
-        // Expects format: <RAM_ADDRESS> <VALUE> per line
-        // Example: "8000 100" (Puts N=100 at RAM[8000])
         uint16_t addr;
         int16_t value;
         bool is_first = true;
@@ -83,23 +73,16 @@ int main(int argc, char* argv[]) {
     Telemetry telemetry;
     cpu.attach_telemetry(&telemetry);
 
-    // Run with a 1-billion cycle safety limit to prevent infinite loops from hanging the benchmarker
     cpu.run(1'000'000'000ULL); 
 
     // Print any requested RAM values (to stderr, so the CSV line on stdout stays clean).
     for (uint16_t addr : peek_addrs) {
         std::cerr << "RAM[" << addr << "] = " << cpu.peek(addr) << "\n";
     }
-
-    // If the program never halted, the run hit the cycle cap. That measurement
-    // is meaningless, so report an error (exit code 2) instead of printing a
-    // normal-looking CSV row that would silently ruin the regression.
     if (!cpu.halted()) {
         std::cerr << "Error: hit the cycle limit without halting\n";
         return 2;
     }
-
-    // Region-of-interest sanity messages (stderr, so the CSV line stays clean).
     if (cpu.roi_started() && !cpu.roi_ended()) {
         std::cerr << "Warning: ROI start was written but ROI end never was; "
                      "counts run to the end of the program.\n";
@@ -108,9 +91,6 @@ int main(int argc, char* argv[]) {
         std::cerr << "Note: region of interest used. The whole run was "
                   << cpu.cycles << " cycles; the CSV line counts only the region.\n";
     }
-
-    // 5. Output standard CSV format for the Python regression script
-    // Format: N,cycles,reads,writes
     std::cout << N << "," 
               << telemetry.cycles << "," 
               << telemetry.ram_reads << "," 
