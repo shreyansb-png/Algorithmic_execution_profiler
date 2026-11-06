@@ -1,6 +1,6 @@
 # Algorithmic Execution Profiler
 
-**An experimental framework for measuring algorithm execution costs and estimating asymptotic time complexity using a custom Hack CPU emulator.**
+**An experimental framework for measuring algorithm execution costs and estimating asymptotic time complexity using  custom Hack CPU emulator.**
 
 **Course:** CS207  
 **Architecture:** 16-bit Hack Computer  
